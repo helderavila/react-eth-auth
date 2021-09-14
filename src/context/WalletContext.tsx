@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { createContext, ReactNode, useEffect, useState } from 'react'
 import { useToast } from '@chakra-ui/react'
+import { ethers } from 'ethers'
 
 interface MetaAuthProviderProps {
   children: ReactNode
@@ -10,25 +11,34 @@ interface MetaAuthContextData {
   connectWallet: () => void;
   walletAddress: string | undefined;
   isWalletConnected: boolean;
+  balance: string;
 }
 
-export const MetaAuthContext = createContext({} as MetaAuthContextData)
+export const WalletContext = createContext({} as MetaAuthContextData)
 
-export function MetaAuthProvider({ children }: MetaAuthProviderProps) {
+export function WalletProvider({ children }: MetaAuthProviderProps) {
   const toast = useToast()
 
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined)
+  const [balance, setBalance] = useState<string | undefined>()
   const isWalletConnected = !!walletAddress
   
   useEffect(() => {
     handleConnectedWallet()
   },[])
 
+  async function getWalletBalance() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const walletBalance = await provider.getBalance(walletAddress)
+    setBalance(ethers.utils.formatEther(walletBalance))
+  }
+
   async function handleConnectedWallet() {
     if (window.ethereum) {
       try {
         const [account] = await window.ethereum.request({ method: 'eth_accounts' })
         setWalletAddress(account)
+        getWalletBalance()
       } catch (err) {
         toast({
           title: 'Ooops!',
@@ -87,13 +97,14 @@ export function MetaAuthProvider({ children }: MetaAuthProviderProps) {
   }
   
   return (
-    <MetaAuthContext.Provider value={{
+    <WalletContext.Provider value={{
       connectWallet,
       walletAddress,
-      isWalletConnected
+      isWalletConnected,
+      balance
     }}>
       {children}
-    </MetaAuthContext.Provider>
+    </WalletContext.Provider>
   )
 }
 

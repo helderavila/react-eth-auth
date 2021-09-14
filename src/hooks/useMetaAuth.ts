@@ -1,4 +1,4 @@
 import { useContext } from 'react';
-import { MetaAuthContext } from '../context/MetaAuthContext';
+import { WalletContext } from '../context/WalletContext';
 
-export const useMetaAuth = () => useContext(MetaAuthContext)
+export const useWallet = () => useContext(WalletContext)

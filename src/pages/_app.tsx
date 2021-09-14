@@ -1,7 +1,7 @@
 import { AppProps } from 'next/app'
 
 import { ChakraProvider } from '@chakra-ui/react'
-import { MetaAuthProvider } from '../context/MetaAuthContext'
+import { WalletProvider } from '../context/WalletContext'
 
 declare global {
   interface Window {
@@ -13,9 +13,9 @@ declare global {
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider>
-      <MetaAuthProvider>
+      <WalletProvider>
         <Component {...pageProps} />
-      </MetaAuthProvider>
+      </WalletProvider>
     </ChakraProvider>
   )
 }

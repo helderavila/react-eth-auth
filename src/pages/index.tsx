@@ -1,8 +1,10 @@
 import { Box, Button, Text, Badge } from '@chakra-ui/react'
-import { useMetaAuth } from '../hooks/useMetaAuth'
+import { useWallet } from '../hooks/useMetaAuth'
 
 export default function Home() {
-  const { connectWallet, isWalletConnected, walletAddress } = useMetaAuth()
+  const { connectWallet, isWalletConnected, walletAddress, balance } = useWallet()
+
+  console.log(balance)
 
   if (!isWalletConnected) {
     return (
@@ -28,12 +30,20 @@ export default function Home() {
       alignItems="center"
       justifyContent="center"
     >
-      <Text
-        color="gray.400"
-        fontWeight="bold"
-      >
-        Wallet connected: {walletAddress}
-      </Text>
+      <Box>
+        <Text
+          color="gray.400"
+          fontWeight="bold"
+        >
+          Wallet connected: {walletAddress}
+        </Text>
+        <Text
+          color="gray.400"
+          fontWeight="bold"
+        >
+          {balance}
+        </Text>
+      </Box>
     </Box>
   )
 }
