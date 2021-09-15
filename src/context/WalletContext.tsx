@@ -12,6 +12,15 @@ interface MetaAuthContextData {
   walletAddress: string | undefined;
   isWalletConnected: boolean;
   balance: string;
+  chain: string;
+}
+
+const chains = {
+  '1': 'mainnet',
+  '3': 'ropsten',
+  '4': 'rinkeby',
+  '5': 'goerli',
+  '42': 'kovan'
 }
 
 export const WalletContext = createContext({} as MetaAuthContextData)
@@ -20,16 +29,17 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
   const toast = useToast()
 
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined)
-  const [balance, setBalance] = useState<string | undefined>()
+  const [balance, setBalance] = useState<string | undefined>('')
+  const [chain, setChain] = useState<string | undefined>('')
   const isWalletConnected = !!walletAddress
-  
+
   useEffect(() => {
     handleConnectedWallet()
-  },[])
+  }, [])
 
-  async function getWalletBalance() {
+  async function getWalletBalance(address: string) {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const walletBalance = await provider.getBalance(walletAddress)
+    const walletBalance = await provider.getBalance(address)
     setBalance(ethers.utils.formatEther(walletBalance))
   }
 
@@ -37,8 +47,13 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
     if (window.ethereum) {
       try {
         const [account] = await window.ethereum.request({ method: 'eth_accounts' })
-        setWalletAddress(account)
-        getWalletBalance()
+        const chainId = await window.ethereum.request({ method: 'net_version' })
+        setChain(chains[chainId])
+
+        if (account) {
+          setWalletAddress(account)
+          getWalletBalance(account)
+        }
       } catch (err) {
         toast({
           title: 'Ooops!',
@@ -65,7 +80,13 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
     if (window.ethereum) {
       try {
         const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' })
-        setWalletAddress(account)
+        const chainId = await window.ethereum.request({ method: 'net_version' })
+        setChain(chains[chainId])
+
+        if (account) {
+          setWalletAddress(account)
+          getWalletBalance(account)
+        }
         toast({
           title: 'Yeeap! :)',
           description: 'Wallet connected!',
@@ -95,13 +116,14 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
       })
     }
   }
-  
+
   return (
     <WalletContext.Provider value={{
       connectWallet,
       walletAddress,
       isWalletConnected,
-      balance
+      balance,
+      chain
     }}>
       {children}
     </WalletContext.Provider>
