@@ -28,6 +28,7 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
   useEffect(() => {
     handleConnectedWallet()
     addChainListener()
+    addAccountListener()
   }, [])
 
   function addChainListener() {
@@ -37,6 +38,17 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
         setChainId(chainId)
         getWalletBalance(accounts[0])
         // window.location.reload();
+      });
+    }
+  }
+
+  function addAccountListener() {
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0])
+          getWalletBalance(accounts[0])
+        }
       });
     }
   }
