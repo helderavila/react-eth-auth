@@ -1,10 +1,22 @@
-import { Box, Button, Text, Badge } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  Text,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverArrow,
+  PopoverCloseButton,
+} from '@chakra-ui/react'
 import { useWallet } from '../hooks/useMetaAuth'
+import { chains } from '../constants/chains'
+import { HiLightningBolt } from 'react-icons/hi'
+
 
 export default function Home() {
-  const { connectWallet, isWalletConnected, walletAddress, balance, chain } = useWallet()
-
-  console.log(balance)
+  const { connectWallet, isWalletConnected, walletAddress, balance, chainId } = useWallet()
 
   if (!isWalletConnected) {
     return (
@@ -21,6 +33,43 @@ export default function Home() {
     )
   }
 
+  if (!chains[chainId]) {
+    return (
+      <Box
+        w="100%"
+        h="100vh"
+        bg="gray.900"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Popover>
+          <PopoverTrigger>
+            <Button
+              background="#FF4848"
+              borderRadius="25px"
+              _hover={{
+                background: "#FF4848",
+                opacity: 0.7
+              }}
+              leftIcon={<HiLightningBolt />}
+            >
+              Wrong network
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            background="gray.900"
+            borderColor="gray.800"
+          >
+            <PopoverCloseButton />
+            <PopoverHeader borderColor="gray.800" color="gray.400">Wrong Network!</PopoverHeader>
+            <PopoverBody color="gray.400">Please connect to the appropriate Ethereum network.</PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </Box>
+    )
+  }
+
   return (
     <Box
       w="100%"
@@ -31,9 +80,9 @@ export default function Home() {
       justifyContent="center"
     >
 
-        <Text fontSize="xs" color="yellow.500" fontWeight="bold">
-          {chain.toUpperCase()}
-        </Text>
+      <Text fontSize="xs" color="yellow.500" fontWeight="bold">
+        {chains[chainId].toUpperCase()}
+      </Text>
       <Box
         display="flex"
         alignItems="center"
@@ -42,7 +91,7 @@ export default function Home() {
         borderRadius="25px"
         paddingLeft="5"
         ml="2"
-        >
+      >
         <Text
           color="gray.400"
           fontWeight="bold"

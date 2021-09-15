@@ -12,15 +12,7 @@ interface MetaAuthContextData {
   walletAddress: string | undefined;
   isWalletConnected: boolean;
   balance: string;
-  chain: string;
-}
-
-const chains = {
-  '1': 'mainnet',
-  '3': 'ropsten',
-  '4': 'rinkeby',
-  '5': 'goerli',
-  '42': 'kovan'
+  chainId: string;
 }
 
 export const WalletContext = createContext({} as MetaAuthContextData)
@@ -30,26 +22,41 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
 
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined)
   const [balance, setBalance] = useState<string | undefined>('')
-  const [chain, setChain] = useState<string | undefined>('')
+  const [chainId, setChainId] = useState<string | undefined>('')
   const isWalletConnected = !!walletAddress
 
   useEffect(() => {
     handleConnectedWallet()
+    addChainListener()
   }, [])
 
+  function addChainListener() {
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', (chainId) => {
+        setChainId(chainId)
+        getWalletBalance(walletAddress)
+        // window.location.reload();
+      });
+    }
+  }
+
   async function getWalletBalance(address: string) {
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const walletBalance = await provider.getBalance(address)
-    setBalance(ethers.utils.formatEther(walletBalance))
+    if (window.ethereum) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const [account] = await window.ethereum.request({ method: 'eth_accounts' })
+      const walletBalance = await provider.getBalance(account)
+
+      setBalance(ethers.utils.formatEther(walletBalance))
+    }
   }
 
   async function handleConnectedWallet() {
     if (window.ethereum) {
       try {
         const [account] = await window.ethereum.request({ method: 'eth_accounts' })
-        const chainId = await window.ethereum.request({ method: 'net_version' })
-        setChain(chains[chainId])
-
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+        // if (!chains[chainId]) throw new Error("Please connect to the appropriate Ethereum network.")
+        setChainId(chainId)
         if (account) {
           setWalletAddress(account)
           getWalletBalance(account)
@@ -57,7 +64,7 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
       } catch (err) {
         toast({
           title: 'Ooops!',
-          description: 'An error ocurred with the wallet',
+          description: err.message,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -80,8 +87,11 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
     if (window.ethereum) {
       try {
         const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' })
-        const chainId = await window.ethereum.request({ method: 'net_version' })
-        setChain(chains[chainId])
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+
+        // if (!chains[chainId]) throw new Error("Please connect to the appropriate Ethereum network.")
+
+        setChainId(chainId)
 
         if (account) {
           setWalletAddress(account)
@@ -98,7 +108,7 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
       } catch (err) {
         toast({
           title: 'Ooops!',
-          description: 'An error ocurred with the wallet',
+          description: err.message,
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -108,7 +118,7 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
     } else {
       toast({
         title: 'Ooops!',
-        description: 'First install metamask wallet',
+        description: 'Install metamask',
         status: 'warning',
         duration: 5000,
         isClosable: true,
@@ -123,7 +133,7 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
       walletAddress,
       isWalletConnected,
       balance,
-      chain
+      chainId
     }}>
       {children}
     </WalletContext.Provider>
