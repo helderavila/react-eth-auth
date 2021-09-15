@@ -32,18 +32,18 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
 
   function addChainListener() {
     if (window.ethereum) {
-      window.ethereum.on('chainChanged', (chainId) => {
+      window.ethereum.on('chainChanged', async (chainId) => {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
         setChainId(chainId)
-        getWalletBalance(walletAddress)
+        getWalletBalance(accounts[0])
         // window.location.reload();
       });
     }
   }
 
-  async function getWalletBalance(address: string) {
+  async function getWalletBalance(account) {
     if (window.ethereum) {
       const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const [account] = await window.ethereum.request({ method: 'eth_accounts' })
       const walletBalance = await provider.getBalance(account)
 
       setBalance(ethers.utils.formatEther(walletBalance))
@@ -53,13 +53,13 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
   async function handleConnectedWallet() {
     if (window.ethereum) {
       try {
-        const [account] = await window.ethereum.request({ method: 'eth_accounts' })
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
         const chainId = await window.ethereum.request({ method: 'eth_chainId' })
         // if (!chains[chainId]) throw new Error("Please connect to the appropriate Ethereum network.")
-        setChainId(chainId)
-        if (account) {
-          setWalletAddress(account)
-          getWalletBalance(account)
+        if (accounts.length > 0 && chainId) {
+          setWalletAddress(accounts[0])
+          getWalletBalance(accounts[0])
+          setChainId(chainId)
         }
       } catch (err) {
         toast({
@@ -86,16 +86,17 @@ export function WalletProvider({ children }: MetaAuthProviderProps) {
   async function connectWallet() {
     if (window.ethereum) {
       try {
-        const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' })
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
         const chainId = await window.ethereum.request({ method: 'eth_chainId' })
 
         // if (!chains[chainId]) throw new Error("Please connect to the appropriate Ethereum network.")
 
-        setChainId(chainId)
-
-        if (account) {
-          setWalletAddress(account)
-          getWalletBalance(account)
+        if (accounts.length > 0 && chainId) {
+          setWalletAddress(accounts[0])
+          getWalletBalance(accounts[0])
+          setChainId(chainId)
+        } else {
+          throw new Error("An error ocurred")
         }
         toast({
           title: 'Yeeap! :)',
